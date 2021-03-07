@@ -138,6 +138,7 @@ dmypy.json
 cython_debug/
 
 # Local files
+.DS_Store
 result/
 training_index.mat
 final_result.mat
