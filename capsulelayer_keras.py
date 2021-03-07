@@ -26,17 +26,16 @@ class Length(layers.Layer):
 class Mask(layers.Layer):
     def call(self, inputs, **kwargs):
         # use true label to select target capsule, shape=[batch_size, num_capsule]
-        if type(
-                inputs
-        ) is list:  # true label is provided with shape = [batch_size, n_classes], i.e. one-hot code.
+        # true label is provided with shape = [batch_size, n_classes], i.e. one-hot code.
+        if type(inputs) is list:
             assert len(inputs) == 2
             inputs, mask = inputs
         else:  # if no true label, mask by the max length of vectors of capsules
             x = inputs
             # Enlarge the range of values in x to make max(new_x)=1 and others < 0
             x = (x - K.max(x, 1, True)) / K.epsilon() + 1
-            mask = K.clip(x, 0,
-                          1)  # the max value in x clipped to 1 and other to 0
+            # the max value in x clipped to 1 and other to 0
+            mask = K.clip(x, 0, 1)
 
         # masked inputs, shape = [batch_size, dim_vector]
         inputs_masked = K.batch_dot(inputs, mask, [1, 1])
@@ -80,9 +79,10 @@ class Conv_Capsule(layers.Layer):
         self.kernel_regularizer = regularizers.get(kernel_regularizer)
 
     def build(self, input_shape):
-        assert len(
-            input_shape
-        ) >= 5, "The input Tensor should have shape=[None, height, width, input_num_capsule, input_dim_vector]"
+        assert (
+            len(input_shape) >= 5,
+            "The input Tensor should have shape=[None, height, width, input_num_capsule, input_dim_vector]"
+        )
         self.caps_num_i = self.kernel_shape[0] * self.kernel_shape[
             1] * self.kernel_shape[2]
         self.output_cap_channel = self.kernel_shape[3]
@@ -134,7 +134,6 @@ class Conv_Capsule(layers.Layer):
                           ])
 
         poses = self.capsules_dynamic_routing(votes)
-
         return poses
 
     def compute_output_shape(self, input_shape):
@@ -144,7 +143,6 @@ class Conv_Capsule(layers.Layer):
             [self.batchsize, h, w, self.kernel_shape[-1], self.dim_vector])
 
     def kernel_tile(self, input):
-
         input_shape = input.shape
         input = tf.reshape(input,
                            shape=[
@@ -176,11 +174,9 @@ class Conv_Capsule(layers.Layer):
                                self.kernel_shape[0] * self.kernel_shape[1]
                            ])
         output = tf.transpose(output, perm=[0, 1, 2, 4, 3])
-
         return output
 
     def mat_transform(self, input, size):
-
         shape = input.shape
         caps_num_i = shape[1].value
         output = K.reshape(input, shape=[-1, caps_num_i, 1, 1, shape[2].value])
@@ -193,11 +189,9 @@ class Conv_Capsule(layers.Layer):
 
         votes = K.reshape(
             votes, [size, caps_num_i, self.kernel_shape[-1], self.dim_vector])
-
         return votes
 
     def capsules_dynamic_routing(self, votes):
-
         shape = votes.shape
 
         votes = K.expand_dims(votes, axis=5)
@@ -209,7 +203,6 @@ class Conv_Capsule(layers.Layer):
 
             if i == self.num_routing - 1:
                 outputs = squash(tf.reduce_sum(c * votes, 3, keep_dims=True))
-
             else:
                 outputs = squash(
                     tf.reduce_sum(c * votes_stopped, 3, keep_dims=True))
@@ -240,11 +233,12 @@ class Class_Capsule(layers.Layer):
         self.bias_regularizer = regularizers.get(bias_regularizer)
 
     def build(self, input_shape):
-        assert len(
-            input_shape
-        ) >= 5, "The input Tensor should have shape=[None, height, width, input_num_capsule, input_dim_vector]"
-        self.input_num_capsule = input_shape[1] * input_shape[2] * input_shape[
-            3]
+        assert (
+            len(input_shape) >= 5,
+            "The input Tensor should have shape=[None, height, width, input_num_capsule, input_dim_vector]"
+        )
+        self.input_num_capsule = (input_shape[1] * input_shape[2] *
+                                  input_shape[3])
         self.input_dim_vector = input_shape[4]
 
         # Transform matrix
@@ -264,7 +258,6 @@ class Class_Capsule(layers.Layer):
         self.built = True
 
     def call(self, inputs, training=None):
-
         shape = inputs.shape
         inputs = K.reshape(inputs, [
             -1, shape[1].value * shape[2].value * shape[3].value,
@@ -301,13 +294,11 @@ class Class_Capsule(layers.Layer):
 
 
 def PrimaryCap1(inputs, dim_vector, n_channels, kernel_size, strides, padding):
-
     output = layers.Conv2D(filters=dim_vector * n_channels,
                            kernel_size=kernel_size,
                            strides=strides,
                            padding=padding,
                            name='primarycap_conv2d')(inputs)
-
     output = layers.BatchNormalization(momentum=0.9,
                                        name='primarycap_bn')(output)
     output = layers.Activation('relu', name='primarycap_relu')(output)
@@ -320,7 +311,6 @@ def PrimaryCap1(inputs, dim_vector, n_channels, kernel_size, strides, padding):
 
 
 def PrimaryCap2(inputs, dim_vector, n_channels, kernel_size, strides, padding):
-
     output = layers.Conv2D(filters=dim_vector * n_channels,
                            kernel_size=kernel_size,
                            strides=strides,
@@ -363,7 +353,6 @@ def ecanet_layer(x, out_dim):
 
 
 def AFC_layer(x):
-
     conv1 = layers.Conv2D(filters=8,
                           kernel_size=3,
                           strides=1,

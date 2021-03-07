@@ -9,7 +9,6 @@ import scipy.io as scio
 
 
 def Ms_CapsNet(input_shape, n_class, num_routing):
-
     x = layers.Input(shape=input_shape)
     #  feature extraction by AFC
     out_afc = AFC_layer(x)
@@ -64,7 +63,6 @@ def margin_loss(y_true, y_pred):
 
 
 def train(model, data, args):
-
     (x_train, y_train), (x_valid, y_valid) = data
 
     # callbacks and save the training model

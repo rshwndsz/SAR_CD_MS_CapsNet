@@ -7,7 +7,6 @@ import numpy as np
 
 
 def load_data(image_file, label_file):
-
     image_data = sio.loadmat(image_file)
     label_data = sio.loadmat(label_file)
 
@@ -35,7 +34,6 @@ def readdata(image_file,
              shuffle_number=None,
              batchnumber=5000,
              times=0):
-
     image, label = load_data(image_file, label_file)
     shape = np.shape(image)
     halfsize = int((windowsize - 1) / 2)
@@ -47,12 +45,12 @@ def readdata(image_file,
     number_samples = len(not_zero_raw)
     number_samples11111 = len(not_zero_col)
     test_nsamples = number_samples - train_nsamples - validation_nsamples
+
     if train_nsamples + validation_nsamples >= number_samples:
         raise ValueError(
             'train_nsamples + validation_nsamples bigger than total samples')
 
     if istraining:
-
         shuffle_number = np.arange(number_samples)
         np.random.shuffle(shuffle_number)
         print('shuffle_number', shuffle_number)
@@ -99,11 +97,9 @@ def readdata(image_file,
     else:
         n_batch = test_nsamples // batchnumber
         if times > n_batch:
-
             return None
 
         if n_batch == times:
-
             batchnumber_test = test_nsamples - n_batch * batchnumber
             test_image = np.zeros(
                 [batchnumber_test, windowsize, windowsize, shape[2]],
@@ -141,7 +137,6 @@ def readdata(image_file,
             return [test_image, test_label]
 
         if times < n_batch:
-
             test_image = np.zeros(
                 [batchnumber, windowsize, windowsize, shape[2]],
                 dtype=np.float32)
