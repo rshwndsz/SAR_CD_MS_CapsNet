@@ -136,3 +136,8 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# Local files
+result/
+training_index.mat
+final_result.mat
