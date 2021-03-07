@@ -11,22 +11,46 @@ import scipy.io as scio
 def Ms_CapsNet(input_shape, n_class, num_routing):
 
     x = layers.Input(shape=input_shape)
-	#  feature extraction by AFC
+    #  feature extraction by AFC
     out_afc = AFC_layer(x)
     #  dim_vector is the dimensions of capsules, n_channels is number of feature maps
-    Primary_caps1 = PrimaryCap1(out_afc, dim_vector=8, n_channels=4, kernel_size=3, strides=2, padding='VALID')
-    Primary_caps2 = PrimaryCap2(out_afc, dim_vector=8, n_channels=4, kernel_size=5, strides=2, padding='VALID')
+    Primary_caps1 = PrimaryCap1(out_afc,
+                                dim_vector=8,
+                                n_channels=4,
+                                kernel_size=3,
+                                strides=2,
+                                padding='VALID')
+    Primary_caps2 = PrimaryCap2(out_afc,
+                                dim_vector=8,
+                                n_channels=4,
+                                kernel_size=5,
+                                strides=2,
+                                padding='VALID')
 
-    Conv_caps1 = Conv_Capsule(kernel_shape=[3, 3, 4, 8], dim_vector=8, strides=[1, 2, 2, 1],
-                              num_routing=num_routing, batchsize=args.batch_size, name='Conv_caps1')(Primary_caps1)
-    Conv_caps2 = Conv_Capsule(kernel_shape=[3, 3, 4, 8], dim_vector=8, strides=[1, 2, 2, 1],
-                              num_routing=num_routing, batchsize=args.batch_size, name='Conv_caps2')(Primary_caps2)
-							  						
-    Class_caps1 = Class_Capsule(num_capsule=n_class, dim_vector=16, num_routing=num_routing, name='class_caps1')(Conv_caps1)
-    Class_caps2 = Class_Capsule(num_capsule=n_class, dim_vector=16, num_routing=num_routing, name='class_caps2')(Conv_caps2)
-	#  fuse the output of class capsule  
-    Class_caps_add=add([Class_caps1, Class_caps2]);
-	
+    Conv_caps1 = Conv_Capsule(kernel_shape=[3, 3, 4, 8],
+                              dim_vector=8,
+                              strides=[1, 2, 2, 1],
+                              num_routing=num_routing,
+                              batchsize=args.batch_size,
+                              name='Conv_caps1')(Primary_caps1)
+    Conv_caps2 = Conv_Capsule(kernel_shape=[3, 3, 4, 8],
+                              dim_vector=8,
+                              strides=[1, 2, 2, 1],
+                              num_routing=num_routing,
+                              batchsize=args.batch_size,
+                              name='Conv_caps2')(Primary_caps2)
+
+    Class_caps1 = Class_Capsule(num_capsule=n_class,
+                                dim_vector=16,
+                                num_routing=num_routing,
+                                name='class_caps1')(Conv_caps1)
+    Class_caps2 = Class_Capsule(num_capsule=n_class,
+                                dim_vector=16,
+                                num_routing=num_routing,
+                                name='class_caps2')(Conv_caps2)
+    #  fuse the output of class capsule
+    Class_caps_add = add([Class_caps1, Class_caps2])
+
     out_caps = Length(name='out_caps')(Class_caps_add)
 
     return models.Model(x, out_caps)
@@ -47,15 +71,22 @@ def train(model, data, args):
     tb = callbacks.TensorBoard(log_dir=args.save_dir + '/tensorboard-logs',
                                batch_size=args.batch_size)
     checkpoint = callbacks.ModelCheckpoint(args.save_dir + '/weights-test.h5',
-                                           save_best_only=True, save_weights_only=True, verbose=1)
+                                           save_best_only=True,
+                                           save_weights_only=True,
+                                           verbose=1)
 
     # compile the model
     model.compile(optimizer=optimizers.Adam(lr=args.lr),
                   loss=[margin_loss],
                   metrics={' ': 'accuracy'})
 
-    model.fit(x_train, y_train, batch_size=args.batch_size, epochs=args.epochs,
-              validation_data=[x_valid, y_valid], callbacks=[tb, checkpoint], verbose=2)
+    model.fit(x_train,
+              y_train,
+              batch_size=args.batch_size,
+              epochs=args.epochs,
+              validation_data=[x_valid, y_valid],
+              callbacks=[tb, checkpoint],
+              verbose=2)
 
     return model
 
@@ -85,7 +116,7 @@ def cal_results(matrix):
         sum += np.sum(matrix[i, :]) * np.sum(matrix[:, i])
     OA = number / np.sum(matrix)
     AA_mean = np.mean(AA)
-    pe = sum / (np.sum(matrix) ** 2)
+    pe = sum / (np.sum(matrix)**2)
     Kappa = (OA - pe) / (1 - pe)
     return OA, AA_mean, Kappa, AA
 
@@ -101,12 +132,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', default=100, type=int)
     parser.add_argument('--n_class', default=2, type=int)  # number of classes
-    parser.add_argument('--epochs', default=50, type=int) 
-    parser.add_argument('--num_routing', default=3, type=int)  # num_routing should > 0
+    parser.add_argument('--epochs', default=50, type=int)
+    parser.add_argument('--num_routing', default=3,
+                        type=int)  # num_routing should > 0
     parser.add_argument('--save_dir', default='./result')
     parser.add_argument('--is_training', default=0, type=int)
     parser.add_argument('--lr', default=0.001, type=float)  # learning rate
-    parser.add_argument('--windowsize', default=9, type=int) # patch size
+    parser.add_argument('--windowsize', default=9, type=int)  # patch size
     args = parser.parse_args()
 
     print(args)
@@ -117,34 +149,46 @@ if __name__ == "__main__":
     image_file = r'./data/YellowRiverI.mat'
     label_file = r'./data/YellowRiverI_gt.mat'
 
-    data, test_shuffle_number = readdata(image_file, label_file, train_nsamples=1000, validation_nsamples=1000,
-                                         windowsize=args.windowsize, istraining=True)
+    data, test_shuffle_number = readdata(image_file,
+                                         label_file,
+                                         train_nsamples=1000,
+                                         validation_nsamples=1000,
+                                         windowsize=args.windowsize,
+                                         istraining=True)
     #  save the index of training samples
-    scio.savemat('training_index.mat', {"index":test_shuffle_number})
-    (x_train, y_train), (x_valid, y_valid) = (data[0], data[1]), (data[2], data[3])
+    scio.savemat('training_index.mat', {"index": test_shuffle_number})
+    (x_train, y_train), (x_valid, y_valid) = (data[0], data[1]), (data[2],
+                                                                  data[3])
 
     # define model
     model = Ms_CapsNet(input_shape=[args.windowsize, args.windowsize, 3],
-                    n_class=args.n_class,
-                    num_routing=args.num_routing)			
+                       n_class=args.n_class,
+                       num_routing=args.num_routing)
     model.summary()
     # plot_model(model, to_file='model.png')
-	
+
     # model training
-	
-    train(model=model, data=((x_train, y_train), (x_valid, y_valid)), args=args)
 
+    train(model=model,
+          data=((x_train, y_train), (x_valid, y_valid)),
+          args=args)
 
-    # model testing 
-	
+    # model testing
+
     model.load_weights('./result/weights-test.h5')
     i = 0
     test_nsamples = 0
     RESULT = []
     matrix = np.zeros([args.n_class, args.n_class], dtype=np.float32)
     while 1:
-        data = readdata(image_file, label_file, train_nsamples=1000, validation_nsamples=1000,
-                        windowsize=args.windowsize, istraining=False, shuffle_number=test_shuffle_number, times=i)
+        data = readdata(image_file,
+                        label_file,
+                        train_nsamples=1000,
+                        validation_nsamples=1000,
+                        windowsize=args.windowsize,
+                        istraining=False,
+                        shuffle_number=test_shuffle_number,
+                        times=i)
         if data == None:
             OA, AA_mean, Kappa, AA = cal_results(matrix)
             print('-' * 50)
@@ -154,10 +198,11 @@ if __name__ == "__main__":
             print('Classwise_acc:', AA)
             break
         test_nsamples += data[0].shape[0]
-        matrix1, ypred, add_samples = test(model=model, data=(data[0], data[1]))
+        matrix1, ypred, add_samples = test(model=model,
+                                           data=(data[0], data[1]))
         matrix = matrix1 + matrix
         #matrix = matrix + test(model=model, data=(data[0], data[1]))
-        RESULT = np.concatenate((RESULT, ypred[add_samples:]),axis = 0)
+        RESULT = np.concatenate((RESULT, ypred[add_samples:]), axis=0)
         i = i + 1
-	# save the final result	
-    scio.savemat('final_result.mat', {"final_resule":RESULT})
+# save the final result
+    scio.savemat('final_result.mat', {"final_resule": RESULT})
