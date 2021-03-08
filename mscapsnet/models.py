@@ -399,7 +399,7 @@ def AFC_layer(x):
     return conv_afc
 
 
-def MSCapsNet(input_shape, n_class, num_routing):
+def MSCapsNet(input_shape, n_class, num_routing, batch_size):
     x = layers.Input(shape=input_shape)
     #  feature extraction by AFC
     out_afc = AFC_layer(x)
@@ -420,13 +420,13 @@ def MSCapsNet(input_shape, n_class, num_routing):
                               dim_vector=8,
                               strides=[1, 2, 2, 1],
                               num_routing=num_routing,
-                              batchsize=args.batch_size,
+                              batchsize=batch_size,
                               name='Conv_caps1')(Primary_caps1)
     Conv_caps2 = Conv_Capsule(kernel_shape=[3, 3, 4, 8],
                               dim_vector=8,
                               strides=[1, 2, 2, 1],
                               num_routing=num_routing,
-                              batchsize=args.batch_size,
+                              batchsize=batch_size,
                               name='Conv_caps2')(Primary_caps2)
     Class_caps1 = Class_Capsule(num_capsule=n_class,
                                 dim_vector=16,
