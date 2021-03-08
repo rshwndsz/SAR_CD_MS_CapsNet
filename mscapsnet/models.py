@@ -1,5 +1,8 @@
-import keras.backend as K
-from keras import initializers, layers, regularizers
+import tensorflow as tf
+import numpy as np
+from keras import backend as K
+
+from keras import initializers, layers, models, optimizers, regularizers, constraints
 from keras.layers import Conv2D
 from keras.layers import Activation
 from keras.layers import AveragePooling2D
@@ -8,11 +11,8 @@ from keras.layers import BatchNormalization
 from keras.layers import Dense
 from keras.layers import Lambda
 from keras.layers import Multiply, multiply
+from keras.layers.merge import concatenate
 from keras.layers.merge import add
-import tensorflow as tf
-# import tflearn
-import numpy as np
-# from SKNet import SKConv
 
 
 class Length(layers.Layer):
@@ -397,3 +397,47 @@ def AFC_layer(x):
     conv_afc = layers.Activation('relu', name='conv3_relu')(conv_fuse)
 
     return conv_afc
+
+
+def MSCapsNet(input_shape, n_class, num_routing, batch_size):
+    x = layers.Input(shape=input_shape)
+    #  feature extraction by AFC
+    out_afc = AFC_layer(x)
+    #  dim_vector is the dimensions of capsules, n_channels is number of feature maps
+    Primary_caps1 = PrimaryCap1(out_afc,
+                                dim_vector=8,
+                                n_channels=4,
+                                kernel_size=3,
+                                strides=2,
+                                padding='VALID')
+    Primary_caps2 = PrimaryCap2(out_afc,
+                                dim_vector=8,
+                                n_channels=4,
+                                kernel_size=5,
+                                strides=2,
+                                padding='VALID')
+    Conv_caps1 = Conv_Capsule(kernel_shape=[3, 3, 4, 8],
+                              dim_vector=8,
+                              strides=[1, 2, 2, 1],
+                              num_routing=num_routing,
+                              batchsize=batch_size,
+                              name='Conv_caps1')(Primary_caps1)
+    Conv_caps2 = Conv_Capsule(kernel_shape=[3, 3, 4, 8],
+                              dim_vector=8,
+                              strides=[1, 2, 2, 1],
+                              num_routing=num_routing,
+                              batchsize=batch_size,
+                              name='Conv_caps2')(Primary_caps2)
+    Class_caps1 = Class_Capsule(num_capsule=n_class,
+                                dim_vector=16,
+                                num_routing=num_routing,
+                                name='class_caps1')(Conv_caps1)
+    Class_caps2 = Class_Capsule(num_capsule=n_class,
+                                dim_vector=16,
+                                num_routing=num_routing,
+                                name='class_caps2')(Conv_caps2)
+    #  fuse the output of class capsule
+    Class_caps_add = add([Class_caps1, Class_caps2])
+    out_caps = Length(name='out_caps')(Class_caps_add)
+
+    return models.Model(x, out_caps)
