@@ -165,20 +165,18 @@ if __name__ == "__main__":
     model.summary()
     # plot_model(model, to_file='model.png')
 
-    # model training
-
+    # Model training
     train(model=model,
           data=((x_train, y_train), (x_valid, y_valid)),
           args=args)
 
-    # model testing
-
+    # Model testing
     model.load_weights('./result/weights-test.h5')
     i = 0
     test_nsamples = 0
     RESULT = []
     matrix = np.zeros([args.n_class, args.n_class], dtype=np.float32)
-    while 1:
+    while True:
         data = readdata(image_file,
                         label_file,
                         train_nsamples=1000,
@@ -199,8 +197,8 @@ if __name__ == "__main__":
         matrix1, ypred, add_samples = test(model=model,
                                            data=(data[0], data[1]))
         matrix = matrix1 + matrix
-        #matrix = matrix + test(model=model, data=(data[0], data[1]))
         RESULT = np.concatenate((RESULT, ypred[add_samples:]), axis=0)
         i = i + 1
-# save the final result
+
+    # save the final result
     scio.savemat('final_result.mat', {"final_resule": RESULT})
